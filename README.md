@@ -11,7 +11,7 @@ This forked repository is intended to be used in conjunction with an Alexa Enabl
 ```
 js
 var stack = new Stack('tooling-test');
-stack.apply('./samples/basic_template.json', {
+stack.apply('<TEMPLATE-URL>', {
   Parameters: { AmiId: 'ami-fd9cecc7' },
   DisableRollback: false,
   Capabilities: [],
