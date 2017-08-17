@@ -6,9 +6,6 @@ Cloudformer attempts to simplify AWS Cloudformation stack creation process in No
 
 This forked repository is intended to be used in conjunction with an Alexa Enabled Device and AWS Lambda, and the code has been adjusted accordingly to cater towards the limitations of both services.
 
-
-## Installation:
-
 ## JS Usage:
 
 ```
