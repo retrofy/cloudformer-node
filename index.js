@@ -28,12 +28,12 @@ var Stack = function(_stackName) {
   this.stackName = _stackName;
 }
 
-Stack.prototype.apply = function(templateFile, options, cb) {
+Stack.prototype.apply = function(templateURL, options, cb) {
   var self = this;
   options = lodash.merge({
     Parameters: {},
     DisableRollback: false,
-    Capabilities: [],
+    Capabilities: ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
     NotificationARNs: [],
     Tags: []
   }, options);
@@ -46,7 +46,7 @@ Stack.prototype.apply = function(templateFile, options, cb) {
     return {Key: k, Value: v};
   });
 
-  var template = fs.readFileSync(templateFile).toString();
+  var template = templateURL;
   self.isValidTemplate(template, function(err, valid) {
     if(!valid) {
       return cb('Unable to update ' + self.stackName + ' - ' + err, false);
@@ -68,14 +68,6 @@ Stack.prototype.delete = function(cb) {
   var self = this;
   console.log('Deleting stack ' + self.stackName + '...');
   cf.deleteStack({StackName: self.stackName}, function(err, data) {
-    self.waitUntilEnd(function(err, succeeded) {
-      if(/Stack:?.*does not exist/.test(err) || /Stack not up/.test(err)) {
-        console.log('Delete complete');
-        return cb(null, true);
-      }
-
-      return cb(err, succeeded);
-    });
   });
 };
 
@@ -106,6 +98,14 @@ Stack.prototype.update = function(template, options, cb) {
   console.log('Initializing stack update of ' + self.stackName + '...');
   options.StackName =  self.stackName;
   options.TemplateBody = template;
+  options = lodash.merge({
+    Parameters: {},
+    DisableRollback: false,
+    Capabilities: ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
+    NotificationARNs: [],
+    Tags: []
+  }, options);
+
   cf.updateStack(options, function(err, data) {
     if(err && /No updates are to be performed/.test(err.message)) {
       console.log(err.message);
@@ -114,22 +114,6 @@ Stack.prototype.update = function(template, options, cb) {
       return cb(err.message, false);
     }
 
-    setTimeout(function() {
-      self.waitUntilEnd(function(err, complete) {
-        if(err) {
-          return cb(err, false);
-        }
-
-        self.isDeploySuccessful(function(err, succeeded) {
-          if(!succeeded) {
-            console.log('Unable to update stack. Check log for more information.');
-          }
-
-          cb(err, succeeded);
-        });
-      });
-    }, 10 * 1000);
-
   });
 };
 
@@ -137,28 +121,20 @@ Stack.prototype.create = function(template, options, cb) {
   var self = this;
   console.log('Initializing stack creation of ' + self.stackName + '...');
   options.StackName =  self.stackName;
-  options.TemplateBody = template;
+  options.TemplateURL = template;
+  options = lodash.merge({
+    Parameters: {},
+    DisableRollback: false,
+    Capabilities: ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
+    NotificationARNs: [],
+    Tags: []
+  }, options);
 
   cf.createStack(options, function(err, data) {
     if(err) {
       return cb(err.message, false);
     }
 
-    setTimeout(function() {
-      self.waitUntilEnd(function(err, complete) {
-        if(err) {
-          return cb(err, false);
-        }
-
-        self.isDeploySuccessful(function(err, succeeded) {
-          if(!succeeded) {
-            console.log('Unable to deploy template. Check log for more information.');
-          }
-
-          cb(err, succeeded);
-        });
-      });
-    }, 10 * 1000);
   });
 };
 
@@ -225,9 +201,9 @@ Stack.prototype.isDeployed = function(cb) {
 };
 
 Stack.prototype.isValidTemplate = function(template, cb) {
-  cf.validateTemplate({TemplateBody: template}, function(err, data) {
+  cf.validateTemplate({TemplateURL: template}, function(err, data) {
     if(err) {
-      return cb(err.message, false);
+        return cb(err.message, false);
     }
 
     return cb(null, true);

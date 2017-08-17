@@ -20,7 +20,7 @@ var list = function(val)  {
 program
   .version('0.0.1')
   .usage('[options] <stackname ...>')
-  .option('-f, --templateFile <path>', 'The CloudFormation template file')
+  .option('-f, --templateFileURL <path>', 'The CloudFormation template file')
   .option('-p, --parameters <parameters>', 'A parameter list in the format k=v,k=v', keyValueList)
   .option('-d, --disableRollback', 'Disable rollback on failure of a create operation')
   .option('-c, --capabilities <list>', 'Any Capabilities to enable with the template eg CAPABILITY_IAM', list)
@@ -43,7 +43,7 @@ var options = ({
   Tags: program.tags || {}
 });
 
-new Stack(stackName).apply(program.templateFile, options, function(err, successful) {
+new Stack(stackName).apply(program.templateFileURL, options, function(err, successful) {
   if(err) {
     console.error(err);
     return process.exit(1);
